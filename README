@@ -1,0 +1,26 @@
+Module with routines that may assist with atonal music analysis and
+composition.
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+But really, why would you do that? Use cpan or cpanm, and
+local::lib, or snag the module from:
+
+http://github.com/thrig/Music-AtonalUtil
+
+DEPENDENCIES
+
+None at this time.
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2012 Jeremy Mates
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself, either Perl version 5.14 or, at
+your option, any later version of Perl 5 you may have available.
