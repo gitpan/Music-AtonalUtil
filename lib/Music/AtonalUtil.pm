@@ -6,7 +6,7 @@ use warnings;
 
 use Carp qw/croak/;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 my $DEG_IN_SCALE = 12;
 
@@ -15,8 +15,8 @@ my $DEG_IN_SCALE = 12;
 # SUBROUTINES
 
 sub new {
-  my ( $class, $self, %param ) = @_;
-  $self //= {};
+  my ( $class, %param ) = @_;
+  my $self = {};
 
   $self->{_DEG_IN_SCALE} = int( $param{DEG_IN_SCALE} // $DEG_IN_SCALE );
   if ( $self->{_DEG_IN_SCALE} < 2 ) {
@@ -175,6 +175,10 @@ sub normal_form {
 
 sub pitch2intervalclass {
   my ( $self, $pitch ) = @_;
+
+  # ensure member of the tone system, otherwise strange results
+  $pitch %= $self->{_DEG_IN_SCALE};
+
   return $pitch > int( $self->{_DEG_IN_SCALE} / 2 )
     ? $self->{_DEG_IN_SCALE} - $pitch
     : $pitch;
@@ -436,6 +440,10 @@ http://www.mta.ca/faculty/arts-letters/music/pc-set_project/pc-set_new/
 =item *
 
 Musimathics, Vol. 1, p.311-317
+
+=item *
+
+L<Music::Chord::Positions> for a more tonal module.
 
 =back
 
