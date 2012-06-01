@@ -10,6 +10,7 @@ use Getopt::Long qw/GetOptions GetOptionsFromArray/;
 use Music::AtonalUtil;
 
 my %modes = (
+  basic                  => \&basics,
   circular_permute       => \&circular_permute,
   complement             => \&complement,
   help                   => \&print_help,
@@ -84,6 +85,14 @@ sub args2pitchset {
   return $pitch_set;
 }
 
+sub basics {
+  my ( $atu, @args ) = @_;
+  emit_pitch_set( $atu->prime_form( args2pitchset( $atu, @args ) ) );
+  emit_pitch_set(
+    scalar $atu->interval_class_content( args2pitchset( $atu, @args ) ),
+    lyflag => 0 );
+}
+
 sub circular_permute {
   my ( $atu, @args ) = @_;
   emit_pitch_set( $atu->circular_permute( args2pitchset( $atu, @args ) ) );
@@ -95,14 +104,16 @@ sub complement {
 }
 
 sub emit_pitch_set {
-  my ($pset) = @_;
+  my ( $pset, %params ) = @_;
+
+  my $lyify = exists $params{lyflag} ? $params{lyflag} : $lyflag;
 
   my $has_nl = 0;
   for my $i (@$pset) {
     if ( ref $i eq 'ARRAY' ) {
-      $has_nl = emit_pitch_set( $i, 1 );
+      $has_nl = emit_pitch_set( $i, %params );
     } else {
-      print( $lyflag ? $pitch2ly{$flavor}{$i} : $i, "\t" );
+      print( $lyify ? $pitch2ly{$flavor}{$i} : $i, "\t" );
     }
   }
   print "\n" unless $has_nl;
@@ -112,12 +123,14 @@ sub emit_pitch_set {
 sub interval_class_content {
   my ( $atu, @args ) = @_;
   emit_pitch_set(
-    $atu->interval_class_content( args2pitchset( $atu, @args ) ) );
+    scalar $atu->interval_class_content( args2pitchset( $atu, @args ) ),
+    lyflag => 0 );
 }
 
 sub invariance_matrix {
   my ( $atu, @args ) = @_;
-  emit_pitch_set( $atu->invariance_matrix( args2pitchset( $atu, @args ) ) );
+  emit_pitch_set( $atu->invariance_matrix( args2pitchset( $atu, @args ) ),
+    lyflag => 0 );
 }
 
 sub invert {
@@ -198,7 +211,8 @@ sub variances {
 
 sub zrelation {
   my ($atu) = @_;
-  emit_pitch_set( [ $atu->zrelation( @{ stdin2pitchsets($atu) } ) ] );
+  emit_pitch_set( [ $atu->zrelation( @{ stdin2pitchsets($atu) } ) ],
+    lyflag => 0 );
 }
 
 sub print_help {
@@ -209,7 +223,7 @@ Atonal music analysis utilities. Options:
 
   --flats               Show flats instead of sharps when --ly used.
   --help                Print this message.
-  --listmodes           Show available modes.
+  --listmodes           Show available modes (see Music::AtonalUtil for docs).
   --ly                  Show lilypond note names instead of pitch numbers.
   --scaledegrees=n      Set a custom number of scale degrees (default: 12).
 
@@ -229,10 +243,13 @@ line) instead of in the arguments:
                    and the union of the supplied pitch sets.
   zrelation        Emits 1 if pitch sets zrelated, 0 if not.
 
-For example:
-
   $0 -- invert --axis=3  0 3 6 7
   (echo 0 1 3 7; echo 0 1 4 6) | $0 zrelation
+
+There is also a 'basic' mode that computes both the prime form and
+interval class content of the input pitch set:
+
+  $0 --ly basic c e g
 
 END_USAGE
   exit 64;
