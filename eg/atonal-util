@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
-# Command line interface to the atonal routines in the
-# Music::AtonalUtil module.
+# Command line interface to the atonal routines in the Music::AtonalUtil
+# module. Use the --help option to see usage information.
 
 use strict;
 use warnings;
@@ -27,12 +27,27 @@ my %modes = (
   zrelation              => \&zrelation,
 );
 
+my %ly2pitch = qw/
+  bis 0 c 0 cis 1 des 1 d 2 dis 3 ees 3 e 4 fes 4 eis 5 f 5
+  fis 6 ges 6 g 7 gis 8 aes 8 a 9 ais 10 bes 10 b 11
+  /;
+my %pitch2ly = (
+  'sharps' =>
+    {qw/0 c 1 cis 2 d 3 dis 4 e 5 f 6 fis 7 g 8 gis 9 a 10 ais 11 b/},
+  'flats' =>
+    {qw/0 c 1 des 2 d 3 ees 4 e 5 f 6 ges 7 g 8 aes 9 a 10 bes 11 b/},
+);
+my $flavor = 'sharps';
+
 GetOptions(
+  'flats|flat'     => \my $is_flat,
   'help'           => \&print_help,
   'listmodes'      => sub { print "$_\n" for sort keys %modes; exit 0 },
+  'ly'             => \my $lyflag,
   'scaledegrees=s' => \my $scale_degrees,
 );
 $scale_degrees //= 12;
+$flavor = 'flats' if $is_flat;
 my $mode = shift // 'help';
 
 $mode = 'help' if !exists $modes{$mode};
@@ -50,13 +65,19 @@ sub args2pitchset {
   my $dis = $atu->scale_degrees;
 
   if ( !@args or ( @args == 1 and $args[0] eq '-' ) ) {
-    chomp( @args = <STDIN> );
+    chomp( @args = readline STDIN );
   }
 
   my $pitch_set;
   for my $arg (@args) {
-    for my $p ( $arg =~ /(\d+)/g ) {
-      push @$pitch_set, $p % $dis;
+    for my $p ( $arg =~ /([\d\w]+)/g ) {
+      if ( $p =~ m/^\d+/ ) {
+        push @$pitch_set, $p % $dis;
+      } elsif ( exists $ly2pitch{$p} ) {
+        push @$pitch_set, $ly2pitch{$p} % $dis;
+      } else {
+        die "error: unknown pitch '$p' in input\n";
+      }
     }
   }
 
@@ -81,7 +102,7 @@ sub emit_pitch_set {
     if ( ref $i eq 'ARRAY' ) {
       $has_nl = emit_pitch_set( $i, 1 );
     } else {
-      print "$i ";
+      print( $lyflag ? $pitch2ly{$flavor}{$i} : $i, "\t" );
     }
   }
   print "\n" unless $has_nl;
@@ -141,6 +162,28 @@ sub set_complex {
   emit_pitch_set( $atu->set_complex( args2pitchset( $atu, @args ) ) );
 }
 
+sub stdin2pitchsets {
+  my ($atu) = @_;
+  my $dis = $atu->scale_degrees;
+
+  my @ss;
+  while ( my $line = readline STDIN ) {
+    my @pset;
+    for my $p ( $line =~ /([\d\w]+)/g ) {
+      if ( $p =~ m/^\d+/ ) {
+        push @pset, $p % $dis;
+      } elsif ( exists $ly2pitch{$p} ) {
+        push @pset, $ly2pitch{$p} % $dis;
+      } else {
+        die "error: unknown pitch '$p' in input\n";
+      }
+    }
+    push @ss, \@pset;
+  }
+
+  return \@ss;
+}
+
 sub transpose {
   my ( $atu, @args ) = @_;
   GetOptionsFromArray( \@args, 'transpose|t=s' => \my $t );
@@ -148,9 +191,15 @@ sub transpose {
   emit_pitch_set( $atu->transpose( args2pitchset( $atu, @args ), $t ) );
 }
 
-# XXX figure out how to accept multiple pitch sets.
-sub variances { my ( $atu, @args ) = @_; die "TODO" }
-sub zrelation { my ( $atu, @args ) = @_; die "TODO" }
+sub variances {
+  my ($atu) = @_;
+  emit_pitch_set( [ $atu->variances( @{ stdin2pitchsets($atu) } ) ] );
+}
+
+sub zrelation {
+  my ($atu) = @_;
+  emit_pitch_set( [ $atu->zrelation( @{ stdin2pitchsets($atu) } ) ] );
+}
 
 sub print_help {
   warn <<"END_USAGE";
@@ -158,21 +207,32 @@ Usage: $0 [options] mode mode-args
 
 Atonal music analysis utilities. Options:
 
+  --flats               Show flats instead of sharps when --ly used.
   --help                Print this message.
   --listmodes           Show available modes.
+  --ly                  Show lilypond note names instead of pitch numbers.
   --scaledegrees=n      Set a custom number of scale degrees (default: 12).
 
-Most modes accept a pitch set (a list of positive integers) either as
-arguments, or specified on STDIN if the arguments list is blank, or the
-final argument is a hyphen. Exceptions include:
+Most modes accept a pitch set (a list of positive integers or lilypond
+note names (see source for supported names)) either as arguments, or
+specified on STDIN if the arguments list is blank, or the final argument
+is a hyphen. Exceptions include:
 
   invert --axis=n       Custom inversion axis (default is 0).
   pitch2intervalclass   Accepts a single pitch, not a pitch set.
   transpose --t=n       Custom transposition (default is 0).
 
+These require two pitch sets; specify the pitch sets on STDIN (one per
+line) instead of in the arguments:
+
+  variances        Emits three lines: the intersection, the difference,
+                   and the union of the supplied pitch sets.
+  zrelation        Emits 1 if pitch sets zrelated, 0 if not.
+
 For example:
 
   $0 -- invert --axis=3  0 3 6 7
+  (echo 0 1 3 7; echo 0 1 4 6) | $0 zrelation
 
 END_USAGE
   exit 64;
