@@ -11,12 +11,15 @@ use Music::AtonalUtil;
 
 my %modes = (
   basic                  => \&basics,
+  basics                 => \&basics,
   circular_permute       => \&circular_permute,
   complement             => \&complement,
+  equivs                 => \&equivs,
   help                   => \&print_help,
   interval_class_content => \&interval_class_content,
   invariance_matrix      => \&invariance_matrix,
   invert                 => \&invert,
+  multiply               => \&multiply,
   normal_form            => \&normal_form,
   pitch2intervalclass    => \&pitch2intervalclass,
   prime_form             => \&prime_form,
@@ -40,6 +43,9 @@ my %pitch2ly = (
 );
 my $flavor = 'sharps';
 
+# XXX would be nice if this only considered data up to the first mode
+# found in the arguments list, soas to avoid the -- to protect those
+# options from this code.
 GetOptions(
   'flats|flat'     => \my $is_flat,
   'help'           => \&print_help,
@@ -74,8 +80,8 @@ sub args2pitchset {
     for my $p ( $arg =~ /([\d\w]+)/g ) {
       if ( $p =~ m/^\d+/ ) {
         push @$pitch_set, $p % $dis;
-      } elsif ( exists $ly2pitch{$p} ) {
-        push @$pitch_set, $ly2pitch{$p} % $dis;
+      } elsif ( exists $ly2pitch{ lc $p } ) {
+        push @$pitch_set, $ly2pitch{ lc $p } % $dis;
       } else {
         die "error: unknown pitch '$p' in input\n";
       }
@@ -101,6 +107,26 @@ sub circular_permute {
 sub complement {
   my ( $atu, @args ) = @_;
   emit_pitch_set( $atu->complement( args2pitchset( $atu, @args ) ) );
+}
+
+sub equivs {
+  my ( $atu, @args ) = @_;
+
+  my ( @transpose, @transpose_invert, %seen );
+
+  for my $i ( 0 .. $atu->scale_degrees - 1 ) {
+    my $set =
+      $atu->normal_form(
+      $atu->transpose( args2pitchset( $atu, @args ), $i ) );
+    if ( !$seen{"@$set"}++ ) {
+      push @transpose, $set;
+      my $iset = $atu->normal_form( $atu->invert($set) );
+      push @transpose_invert, $iset if !$seen{"@$iset"}++;
+    }
+  }
+
+  emit_pitch_set( \@transpose );
+  emit_pitch_set( \@transpose_invert );
 }
 
 sub emit_pitch_set {
@@ -135,9 +161,16 @@ sub invariance_matrix {
 
 sub invert {
   my ( $atu, @args ) = @_;
-  GetOptionsFromArray( \@args, 'axis|a=s' => \my $axis );
+  GetOptionsFromArray( \@args, 'axis|n=s' => \my $axis );
   $axis //= 0;
   emit_pitch_set( $atu->invert( args2pitchset( $atu, @args ), $axis ) );
+}
+
+sub multiply {
+  my ( $atu, @args ) = @_;
+  GetOptionsFromArray( \@args, 'factor|n=s' => \my $factor );
+  $factor //= 1;
+  emit_pitch_set( $atu->multiply( args2pitchset( $atu, @args ), $factor ) );
 }
 
 sub normal_form {
@@ -165,7 +198,7 @@ sub retrograde {
 
 sub rotate {
   my ( $atu, @args ) = @_;
-  GetOptionsFromArray( \@args, 'rotate|r=s' => \my $r );
+  GetOptionsFromArray( \@args, 'rotate|n=s' => \my $r );
   $r //= 0;
   emit_pitch_set( $atu->rotate( args2pitchset( $atu, @args ), $r ) );
 }
@@ -185,8 +218,8 @@ sub stdin2pitchsets {
     for my $p ( $line =~ /([\d\w]+)/g ) {
       if ( $p =~ m/^\d+/ ) {
         push @pset, $p % $dis;
-      } elsif ( exists $ly2pitch{$p} ) {
-        push @pset, $ly2pitch{$p} % $dis;
+      } elsif ( exists $ly2pitch{ lc $p } ) {
+        push @pset, $ly2pitch{ lc $p } % $dis;
       } else {
         die "error: unknown pitch '$p' in input\n";
       }
@@ -199,7 +232,7 @@ sub stdin2pitchsets {
 
 sub transpose {
   my ( $atu, @args ) = @_;
-  GetOptionsFromArray( \@args, 'transpose|t=s' => \my $t );
+  GetOptionsFromArray( \@args, 'transpose|n=s' => \my $t );
   $t //= 0;
   emit_pitch_set( $atu->transpose( args2pitchset( $atu, @args ), $t ) );
 }
@@ -230,14 +263,15 @@ Atonal music analysis utilities. Options:
 Most modes accept a pitch set (a list of positive integers or lilypond
 note names (see source for supported names)) either as arguments, or
 specified on STDIN if the arguments list is blank, or the final argument
-is a hyphen. Exceptions include:
+is a hyphen. Exceptions include (:
 
-  invert --axis=n       Custom inversion axis (default is 0).
+  invert    --n=N       Custom inversion axis (default is 0).
+  multiply  --n=N       Multiply the pitch set by a factor (default is 1).
   pitch2intervalclass   Accepts a single pitch, not a pitch set.
-  transpose --t=n       Custom transposition (default is 0).
+  transpose --n=N       Custom transposition (default is 0).
 
-These require two pitch sets; specify the pitch sets on STDIN (one per
-line) instead of in the arguments:
+The following require two pitch sets; specify the pitch sets on STDIN
+(one per line) instead of in the arguments:
 
   variances        Emits three lines: the intersection, the difference,
                    and the union of the supplied pitch sets.

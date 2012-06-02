@@ -6,7 +6,7 @@ use warnings;
 
 use Carp qw/croak/;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 my $DEG_IN_SCALE = 12;
 
@@ -108,6 +108,15 @@ sub invert {
   }
 
   return \@inverse;
+}
+
+sub multiply {
+  my ( $self, $pset, $factor ) = @_;
+  croak "pitch set must be array ref\n" unless ref $pset eq 'ARRAY';
+  croak "pitch set must contain something\n" if !@$pset;
+  $factor //= 1;
+
+  return [ map { my $p = $_ * $factor % $self->{_DEG_IN_SCALE}; $p } @$pset ];
 }
 
 sub normal_form {
@@ -406,6 +415,9 @@ pitch set.
 
   $atu->complement([1,2,3]);    # [0,4,5,6,7,8,9,10,11]
 
+Calling B<prime_form> on the result will find the abstract complement of
+the original set.
+
 =item B<interval_class_content> I<pitch set>
 
 Given a pitch set with at least two elements, returns an array reference
@@ -424,6 +436,12 @@ than learn how to read this table.)
 
 Inverts the given pitch set, by default around the 0 axis, within the
 degrees in scale. Returns resulting pitch set as an array reference.
+
+=item B<multiply> I<pitch set> I<factor>
+
+Multiplies the supplied pitch set by the given factor, modulates the
+results by the B<scale_degrees>, and returns the results as an array
+reference.
 
 =item B<normal_form> I<pitch set>
 
@@ -471,10 +489,25 @@ headers, pitch set inversion as the row headers, and the combination of
 those two for the intersection of the row and column headers. Returns
 reference to the resulting array of arrays.
 
+Ideally the first pitch of the input pitch set should be 0 (so the input
+may need reduction to B<prime_form> first).
+
 =item B<transpose> I<pitch set> I<integer>
 
 Transposes the given pitch set by the given integer value, returns that
-result as an array reference.
+result as an array reference. Transpositional equivalence and
+Transposition+Inversion equivalence can be iterated through by
+appropriate calls to this method and also B<invert>:
+
+  my $atu = Music::AtonalUtil->new;
+  my $ps = [ 0, 1, 5, 8 ];
+
+  my ( @transpose, @transpose_invert );
+
+  for my $i ( 0 .. 11 ) {
+    push @transpose, $atu->transpose( $ps, $i );
+    push @transpose_invert, $atu->invert( $transpose[-1] );
+  }
 
 =item B<variances> I<pitch set1> I<pitch set2>
 
