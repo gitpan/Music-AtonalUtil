@@ -2,7 +2,9 @@ Makefile.PL
 MANIFEST
 README
 t/Music-AtonalUtil.t
+t/pod.t
 lib/Music/AtonalUtil.pm
+eg/_atonal-util
 eg/atonal-util
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)
