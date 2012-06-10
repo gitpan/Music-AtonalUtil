@@ -6,7 +6,7 @@ use warnings;
 
 use Carp qw/croak/;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 my $DEG_IN_SCALE = 12;
 
@@ -61,6 +61,9 @@ sub interval_class_content {
   my ( $self, $pset ) = @_;
   croak "pitch set must be array ref\n" unless ref $pset eq 'ARRAY';
   croak "pitch set must contain at least two elements\n" if @$pset < 2;
+
+  my %seen;
+  @$pset = sort { $a <=> $b } grep { !$seen{$_}++ } @$pset;
 
   my %icc;
   for my $i ( 1 .. $#$pset ) {
