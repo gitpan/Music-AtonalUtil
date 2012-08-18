@@ -17,5 +17,9 @@ no_index:
   directory:
     - t
     - inc
-requires: {}
-version: 0.12
+requires:
+  Algorithm::Permute: 0
+  Carp: 0
+  List::MoreUtils: 0
+  Test::More: 0
+version: 0.13
