@@ -8,7 +8,7 @@ use Algorithm::Permute ();
 use Carp qw/croak/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 my $DEG_IN_SCALE = 12;
 
@@ -223,6 +223,7 @@ sub notes2pitches {
       ceses => 10,
       aisis => 11,
       b     => 11,
+      ces   => 11,
     };
   } elsif ( ref $conversion ne 'HASH' ) {
     croak "conversion must be hash ref\n";
@@ -321,6 +322,8 @@ sub rotate {
   return \@rot;
 }
 
+# XXX probably should disallow changing this on the fly, esp. if allow
+# method chaining, as it could throw off results in wacky ways.
 sub scale_degrees {
   my ( $self, $dis ) = @_;
   if ( defined $dis ) {
@@ -501,6 +504,9 @@ Warning! There may be errors due to misunderstanding of atonal theory by
 the autodidactic author. If in doubt, compare the results of this code
 with other material available.
 
+Warning! The interface may change in the future (e.g. more OOish, so can
+do things like ->foo->bar->as_string and the like).
+
 =head1 METHODS
 
 By default, a 12-tone system is assumed. Input values are (often) not
@@ -568,12 +574,16 @@ absolute pitch-class interval (APIC) vector:
 
 https://en.wikipedia.org/wiki/Interval_vector
 
+Uses include an indication of invarience under transposition; see
+the B<invariants> mode of C<eg/atonal-util> for the display of
+invariant pitches.
+
 =item B<invariance_matrix> I<pitch_set>
 
 Returns reference to an array of references that comprise the invarience
-under Transpose(N)Inversion operations on the given pitch set. (With
-code, probably easier to iterate through all the T and T(N)I operations
-than learn how to read this table.)
+under Transpose(N)Inversion operations on the given pitch set. Probably
+easier to use the B<invariants> mode of C<eg/atonal-util> or use
+equivalent code.
 
 =item B<invert> I<pitch_set> I<optional_axis>
 
@@ -720,6 +730,8 @@ associated mistakes in understanding thereof by the author.
 
 =head1 SEE ALSO
 
+Reference and learning material:
+
 =over 4
 
 =item *
@@ -735,6 +747,10 @@ http://www.mta.ca/faculty/arts-letters/music/pc-set_project/pc-set_new/
 =item *
 
 Musimathics, Vol. 1, p.311-317
+
+=item *
+
+"The Structure of Atonal Music" by Allen Forte.
 
 =item *
 
