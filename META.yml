@@ -22,4 +22,4 @@ requires:
   Carp: 0
   List::MoreUtils: 0
   Test::More: 0
-version: 0.17
+version: 0.18
