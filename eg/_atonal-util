@@ -24,6 +24,7 @@ _atonalutil_mode() {
     'complement:complement of set'
     'equivs:Tn and TnI equivalents' \
     'findin:find pitch sets satisfying a base set' \
+    'fnums:return all Forte Numbers and pitch sets' \
     'forte2pcs:return pitch set for Forte Number' \
     'interval_class_content:ICC'
     'invariance_matrix:invarience under TnI' \
@@ -41,6 +42,7 @@ _atonalutil_mode() {
     'subsets:subsets of a given pitch set' \
     'tcis:transposition inversion common-tone structure' \
     'tcs:transposition common-tone structure' \
+    'tension:tension values for given pitch set' \
     'transpose:Tn' \
     'transpose_invert:TnI' \
     'variances:intersection, difference, and union of two sets' \
@@ -84,6 +86,7 @@ _atonalutil_equivs() {
     '--flats[print notes as flats]' \
     '--ly[emit notes not pitch numbers]'
 }
+_atonalutil_fnums() { }
 _atonalutil_findin() {
   _arguments -s \
     '--flats[print notes as flats]' \
@@ -160,6 +163,7 @@ _atonalutil_set_complex() {
 }
 _atonalutil_tcis() { }
 _atonalutil_tcs() { }
+_atonalutil_tension() { }
 _atonalutil_transpose() {
   _arguments -s \
     '--transpose=[transposition value]:value:( )' \

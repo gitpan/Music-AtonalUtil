@@ -1,5 +1,5 @@
 {
-   "abstract" : "Perl extension for atonal music analysis and composition",
+   "abstract" : "atonal music analysis and composition",
    "author" : [
       "Jeremy Mates <jmates@cpan.org>"
    ],
@@ -35,10 +35,12 @@
             "Algorithm::Permute" : 0,
             "Carp" : 0,
             "List::MoreUtils" : 0,
+            "Music::LilyPondUtil" : 0,
+            "Music::Tension" : 0,
             "Test::More" : 0
          }
       }
    },
    "release_status" : "stable",
-   "version" : "0.18"
+   "version" : "0.20"
 }
