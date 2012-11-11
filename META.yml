@@ -21,7 +21,9 @@ requires:
   Algorithm::Permute: 0
   Carp: 0
   List::MoreUtils: 0
-  Music::LilyPondUtil: 0
-  Music::Tension: 0
   Test::More: 0
-version: 0.20
+resources:
+  homepage: http://github.com/thrig/Music-AtonalUtil
+  license: http://dev.perl.org/licenses/
+  repository: http://github.com/thrig/Music-AtonalUtil
+version: 0.21

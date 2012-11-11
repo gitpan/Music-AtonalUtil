@@ -10,7 +10,7 @@ use Algorithm::Permute ();
 use Carp qw/croak/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 my $DEG_IN_SCALE = 12;
 
@@ -903,8 +903,9 @@ Then see below for methods.
 
 This module contains a variety of routines suitable for atonal music
 composition and analysis. See the methods below, the test suite, and the
-C<eg/atonal-util> command line interface for ideas on how to use these
-routines. L<"SEE ALSO"> has links to documentation on atonal analysis.
+C<atonal-util> command line interface (in L<App::MusicTools>) for ideas
+on how to use these routines. L<"SEE ALSO"> has links to documentation
+on atonal analysis.
 
 Warning! There may be errors due to misunderstanding of atonal theory by
 the autodidactic author. If in doubt, compare the results of this code
@@ -992,13 +993,13 @@ absolute pitch-class interval (APIC) vector:
 
 https://en.wikipedia.org/wiki/Interval_vector
 
-Uses include an indication of invarience under transposition; see
+Uses include an indication of invariance under transposition; see
 the B<invariants> mode of C<eg/atonal-util> for the display of
 invariant pitches.
 
 =item B<invariance_matrix> I<pitch_set>
 
-Returns reference to an array of references that comprise the invarience
+Returns reference to an array of references that comprise the invariance
 under Transpose(N)Inversion operations on the given pitch set. Probably
 easier to use the B<invariants> mode of C<eg/atonal-util> or use
 equivalent code.
@@ -1011,7 +1012,7 @@ Some examples or styles assume rotation with an axis of 6, for example:
 
 https://en.wikipedia.org/wiki/Set_%28music%29#Serial
 
-Has the "retrograde-inverse transposition" of C<0 11 3> becomming C<4 8
+Has the "retrograde-inverse transposition" of C<0 11 3> becoming C<4 8
 7>. This can be reproduced via:
 
   my $p = $atu->retrograde([0,11,3]);
@@ -1181,7 +1182,8 @@ L<Music::Chord::Positions> for a more tonal module.
 =item *
 
 L<Music::LilyPondUtil> for where the pitch-number to lilypond-note-name
-code has been moved to.
+code has been moved to, and L<App::MusicTools> for where the command
+line utilities have been stashed.
 
 =back
 
