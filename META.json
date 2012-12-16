@@ -35,6 +35,7 @@
             "Algorithm::Permute" : 0,
             "Carp" : 0,
             "List::MoreUtils" : 0,
+            "Scalar::Util" : 0,
             "Test::More" : 0
          }
       }
@@ -49,5 +50,5 @@
          "url" : "http://github.com/thrig/Music-AtonalUtil"
       }
    },
-   "version" : "0.21"
+   "version" : "0.40"
 }
