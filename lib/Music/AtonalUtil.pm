@@ -1,4 +1,9 @@
-# Code for atonal music analysis and composition
+# -*- Perl -*-
+#
+# Code for atonal music analysis and composition (plus an assortment of
+# other routines perhaps suitable for composition needs but not exactly
+# atonal, and I do not want to create some Music::KitchenDrawer or
+# whatever for them, and I'm totally making all this up as I go along).
 
 package Music::AtonalUtil;
 
@@ -11,7 +16,7 @@ use Carp qw/croak/;
 use List::MoreUtils qw/firstidx uniq/;
 use Scalar::Util qw/looks_like_number/;
 
-our $VERSION = '0.51';
+our $VERSION = '0.61';
 
 my $DEG_IN_SCALE = 12;
 
@@ -490,6 +495,39 @@ sub complement {
   my %seen;
   @seen{@$pset} = ();
   return [ grep { !exists $seen{$_} } 0 .. $self->{_DEG_IN_SCALE} - 1 ];
+}
+
+# Utility, "mirrors" a pitch to be within supplied min/max values as
+# appropriate for how many times the pitch "reflects" back within those
+# limits, which will depend on which limit is broken and by how much.
+sub reflect_pitch {
+  my ( $self, $v, $min, $max ) = @_;
+  croak "pitch must be a number" if !looks_like_number $v;
+  croak "limits must be numbers and min less than max"
+    if !looks_like_number $min
+      or !looks_like_number $max
+      or $min >= $max;
+  return $v if $v <= $max and $v >= $min;
+
+  my ( @origins, $overshoot, $direction );
+  if ( $v > $max ) {
+    @origins   = ( $max, $min );
+    $overshoot = abs( $v - $max );
+    $direction = -1;
+  } else {
+    @origins   = ( $min, $max );
+    $overshoot = abs( $min - $v );
+    $direction = 1;
+  }
+  my $range    = abs( $max - $min );
+  my $register = int( $overshoot / $range );
+  if ( $register % 2 == 1 ) {
+    @origins = reverse @origins;
+    $direction *= -1;
+  }
+  my $remainder = $overshoot % $range;
+
+  return $origins[0] + $remainder * $direction;
 }
 
 sub forte2pcs {
@@ -987,9 +1025,10 @@ Then see below for methods.
 =head1 DESCRIPTION
 
 This module contains a variety of routines suitable for atonal music
-composition and analysis. See the methods below, the test suite, and the
+composition and analysis (plus a bunch of other routines I could find
+no better home for). See the methods below, the test suite, and the
 C<atonal-util> command line interface (in L<App::MusicTools>) for ideas
-on how to use these routines. L<"SEE ALSO"> has links to documentation
+on how to use these routines. L</"SEE ALSO"> has links to documentation
 on atonal analysis.
 
 Warning! There may be errors due to misunderstanding of atonal theory by
@@ -1055,6 +1094,19 @@ pitch set.
 Calling B<prime_form> on the result will find the abstract complement of
 the original set.
 
+=item B<reflect_pitch> I<pitch>, I<min>, I<max>
+
+Constrains the supplied pitch to reside within the supplied minimum and
+maximum limits, by "reflecting" the pitch back off the limits. For
+example, given the min and max limits of 6 and 12:
+
+  pitch  ... 10 11 12 13 14 15 16 17 18 19 20 21 ...
+  result ... 10 11 12 11 10  9  8  7  6  7  8  9 ...
+
+This may be of use in a L<Music::LilyPondUtil> C<*_pitch_hook> function
+to keep the notes within a certain range (modulus math, by contrast,
+produces a sawtooth pattern with occasional leaps).
+
 =item B<forte2pcs> I<forte_number>
 
 Given a Forte Number (such as C<6-z44> or C<6-Z44>), returns the
@@ -1076,7 +1128,7 @@ sound the same (see also B<zrelation>).
 This vector is also known as a pitch-class interval (PIC) vector or
 absolute pitch-class interval (APIC) vector:
 
-https://en.wikipedia.org/wiki/Interval_vector
+L<https://en.wikipedia.org/wiki/Interval_vector>
 
 Uses include an indication of invariance under transposition; see
 the B<invariants> mode of C<eg/atonal-util> for the display of
@@ -1095,7 +1147,7 @@ Inverts the given pitch set, by default around the 0 axis, within the
 degrees in scale. Returns resulting pitch set as an array reference.
 Some examples or styles assume rotation with an axis of 6, for example:
 
-https://en.wikipedia.org/wiki/Set_%28music%29#Serial
+L<https://en.wikipedia.org/wiki/Set_%28music%29#Serial>
 
 Has the "retrograde-inverse transposition" of C<0 11 3> becoming C<4 8
 7>. This can be reproduced via:
@@ -1275,7 +1327,7 @@ B<interval_class_content>, false if not.
 If the bug is in the latest version, send a report to the author.
 Patches that fix problems or add new features are welcome.
 
-http://github.com/thrig/Music-AtonalUtil
+L<http://github.com/thrig/Music-AtonalUtil>
 
 =head2 Known Issues
 
@@ -1296,7 +1348,7 @@ array references.
 
 =item *
 
-http://www.mta.ca/faculty/arts-letters/music/pc-set_project/pc-set_new/
+L<http://www.mta.ca/faculty/arts-letters/music/pc-set_project/pc-set_new/>
 
 =item *
 
@@ -1308,7 +1360,7 @@ Musimathics, Vol. 1, p.311-317
 
 =item *
 
-http://en.wikipedia.org/wiki/Forte_number
+L<http://en.wikipedia.org/wiki/Forte_number>
 
 =item *
 
