@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Music-AtonalUtil
-version:            0.61
+version:            0.70
 abstract:           atonal music analysis and composition
 author:
     - Jeremy Mates <jmates@cpan.org>
