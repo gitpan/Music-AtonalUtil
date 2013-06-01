@@ -16,7 +16,7 @@ use Carp qw/croak/;
 use List::MoreUtils qw/firstidx lastidx uniq/;
 use Scalar::Util qw/looks_like_number/;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 my $DEG_IN_SCALE = 12;
 
@@ -447,6 +447,19 @@ my $PCS2FORTE = {
 #
 # SUBROUTINES
 
+# Utility, convert a scale_degrees-bit number into a pitch set.
+#            7   3  0
+# 137 -> 000010001001 -> [0,3,7]
+sub bits2pcs {
+  my ( $self, $bs ) = @_;
+
+  my @pset;
+  for my $p ( 0 .. $self->{_DEG_IN_SCALE} - 1 ) {
+    push @pset, $p if $bs & ( 1 << $p );
+  }
+  return \@pset;
+}
+
 sub circular_permute {
   my $self = shift;
   my $pset = ref $_[0] eq 'ARRAY' ? $_[0] : [@_];
@@ -658,7 +671,7 @@ sub normal_form {
     push @{ $origmap{ $p % $self->{_DEG_IN_SCALE} } }, $p;
   }
   if ( keys %origmap == 1 ) {
-    return [ keys %origmap ], \%origmap;
+    return wantarray ? ( [ keys %origmap ], \%origmap ) : [ keys %origmap ];
   }
   my @nset = sort { $a <=> $b } keys %origmap;
 
@@ -712,7 +725,23 @@ sub normal_form {
     @normal = @{ $equivs->[0] };
   }
 
-  return \@normal, \%origmap;
+  return wantarray ? ( \@normal, \%origmap ) : \@normal;
+}
+
+# Utility, convert a pitch set into a scale_degrees-bit number:
+#                7   3  0
+# [0,3,7] -> 000010001001 -> 137
+sub pcs2bits {
+  my $self = shift;
+  my $pset = ref $_[0] eq 'ARRAY' ? $_[0] : [@_];
+
+  croak 'pitch set must contain something' if !@$pset;
+
+  my $bs = 0;
+  for my $p ( map $_ % $self->{_DEG_IN_SCALE}, @$pset ) {
+    $bs |= 1 << $p;
+  }
+  return $bs;
 }
 
 sub pcs2forte {
@@ -740,6 +769,21 @@ sub pcs2intervals {
   return \@intervals;
 }
 
+sub pcs2str {
+  my $self = shift;
+  croak 'must supply a pitch set' if !defined $_[0];
+
+  my $str;
+  if ( ref $_[0] eq 'ARRAY' ) {
+    $str = '[' . join( ',', @{ $_[0] } ) . ']';
+  } elsif ( $_[0] =~ m/,/ ) {
+    $str = '[' . $_[0] . ']';
+  } else {
+    $str = '[' . join( ',', @_ ) . ']';
+  }
+  return $str;
+}
+
 sub pitch2intervalclass {
   my ( $self, $pitch ) = @_;
 
@@ -751,14 +795,16 @@ sub pitch2intervalclass {
     : $pitch;
 }
 
+# XXX tracking of original pitches would be nice, though complicated, as
+# ->invert would need to be modifed or a non-modulating version used
 sub prime_form {
   my $self = shift;
   my $pset = ref $_[0] eq 'ARRAY' ? $_[0] : [@_];
 
   croak 'pitch set must contain something' if !@$pset;
 
-  my @forms = ( $self->normal_form($pset) )[0];
-  push @forms, ( $self->normal_form( $self->invert( 0, $forms[0] ) ) )[0];
+  my @forms = scalar $self->normal_form($pset);
+  push @forms, scalar $self->normal_form( $self->invert( 0, $forms[0] ) );
 
   for my $set (@forms) {
     $set = $self->transpose( $self->{_DEG_IN_SCALE} - $set->[0], $set )
@@ -1107,6 +1153,12 @@ basis for subsequent method calls. This value can be set or inspected
 via the B<scale_degrees> call. B<Note that while non-12-tone systems are
 in theory supported, they have not really been tested.>
 
+=item B<bits2pcs> I<number>
+
+Converts a number into a I<pitch_set>, and returns said set as an array
+reference. Performs opposite role of the B<pcs2bits> method. Will not
+consider bits beyond B<scale_degrees> in the input number.
+
 =item B<circular_permute> I<pitch_set>
 
 Takes a pitch set (array reference to list of pitches or just a
@@ -1235,10 +1287,10 @@ reference. Does not advance the index.
 
 =item B<normal_form> I<pitch_set>
 
-Returns two values; first, the normal form of the passed pitch set as an
-array reference, and secondly, a hash reference linking the normal form
-values to array references containing the input pitch numbers those
-normal form values represent. An example may clarify:
+Returns two values in list context; first, the normal form of the passed
+pitch set as an array reference, and secondly, a hash reference linking
+the normal form values to array references containing the input pitch
+numbers those normal form values represent. An example may clarify:
 
   my ($ps, $lookup) = $atu->normal_form(60, 64, 67, 72); # c' e' g' c''
 
@@ -1259,7 +1311,8 @@ the input are X" type questions.
 
 =back
 
-Use the following to select just the normal form array reference:
+Use C<scalar> context or the following to select just the normal form
+array reference:
 
   my $just_the_nf_thanks = ($atu->normal_form(...))[0];
 
@@ -1269,6 +1322,27 @@ the Allen Forte method. There is stub code for the Allen Forte method in
 this module, though I lack enough information to verify if that code is
 correct. The Forte Numbers on Wikipedia match that of the www.mta.ca
 link method.
+
+See also B<normalize> of L<Music::NeoRiemannianTonnetz> for a different
+take on normal and prime forms.
+
+=item B<pcs2bits> I<pitch_set>
+
+Converts a I<pitch_set> into a B<scale_degrees>-bit number.
+
+                 7   3  0
+  [0,3,7] -> 000010001001 -> 137
+
+These can be inspected via C<printf>, and the usual bit operations
+applied as desired.
+
+  my $mask = $atu->pcs2bits(0,3,7);
+  sprintf '%012b', $mask;           # 000010001001
+
+  if ( $mask == ( $atu->pcs2bits($other_pset) & $mask ) ) {
+    # $other_pset has all the same bits on as $mask does
+    ...
+  }
 
 =item B<pcs2forte> I<pitch_set>
 
@@ -1282,6 +1356,15 @@ Given a pitch set of at least two elements, returns the list of
 intervals between those pitch elements. This list is returned as an
 array reference.
 
+=item B<pcs2str> I<pitch_set>
+
+Given a pitch set (or string with commas in it) returns the pitch set as
+a string in C<[0,1,2]> form.
+
+  $atu->pcs2str([0,3,7])   # "[0,3,7]"
+  $atu->pcs2str(0,3,7)     # "[0,3,7]"
+  $atu->pcs2str("0,3,7")   # "[0,3,7]"
+
 =item B<pitch2intervalclass> I<pitch>
 
 Returns the interval class a given pitch belongs to (0 is 0, 11 maps
@@ -1292,6 +1375,9 @@ system). Used internally by the B<interval_class_content> method.
 
 Returns the prime form of a given pitch set (via B<normal_form> and
 various other operations on the passed pitch set) as an array reference.
+
+See also B<normalize> of L<Music::NeoRiemannianTonnetz> for a different
+take on normal and prime forms.
 
 =item B<reflect_pitch> I<pitch>, I<min>, I<max>
 
@@ -1457,7 +1543,8 @@ L<http://en.wikipedia.org/wiki/Forte_number>
 
 =item *
 
-L<Music::Chord::Positions> for a more tonal module.
+L<Music::Chord::Positions> and L<Music::NeoRiemannianTonnetz> for other
+means of wrangling music.
 
 =item *
 
