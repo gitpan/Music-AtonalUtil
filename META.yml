@@ -18,9 +18,10 @@ no_index:
     - t
     - inc
 requires:
-  Algorithm::Permute: 0
+  Algorithm::Combinatorics: 0
   Carp: 0
   List::MoreUtils: 0
+  List::Util: 0
   Scalar::Util: 0
   Test::More: 0
   perl: 5.01
@@ -28,4 +29,4 @@ resources:
   homepage: http://github.com/thrig/Music-AtonalUtil
   license: http://dev.perl.org/licenses/
   repository: http://github.com/thrig/Music-AtonalUtil
-version: 1.02
+version: 1.03
