@@ -1,0 +1,36 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.73.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 84d1bb8fbf0e728dc5583632c540721b7bd99a65 Changes
+SHA1 846252ea9428ead5a9f387bcd843958f5759609c LICENSE
+SHA1 4df2e09c164fbfff9cd0928762bd5f08bcd4714b MANIFEST
+SHA1 a231fb42f72452ac87e3d61c852726e009a88b6c Makefile.PL
+SHA1 89fa8e42f2e8365226c02f10dfd1f6550cc8fa03 README
+SHA1 bae8f16fe5b8334712862cf86173e6c23d8149bc eg/fortefy
+SHA1 850c8a714fe7e1987e0ba3b89e395630cefb3df9 lib/Music/AtonalUtil.pm
+SHA1 90ecfd073ab216bba35b1bfec1732d43d0345bbd t/Music-AtonalUtil.t
+SHA1 3ef65383d82f059f56f43236663119c01974decb t/pod.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAEBAgAGBQJTMQenAAoJEDTEVWqwTuCUC5oH/3Md28b90gbS60t/tc9bLOtw
+X92IwVoI/6RN26THOHL7Mf0N9dTtDPvfS3XLL1Foenf0rJe3VqdS9Dc4RcLNcAnh
+6qtgW4qjubKMdTeGcdXrXvR8gqMZxjEexvzEu8rKWMeJ1RNMgij76uP2lS9+yKG6
+A1ZMs/m0g3IK/C8rOF4V+3S/J3J1ODVGtFRq7QlKngkL3cDJPHVow8jCfURGsUAb
++Wgow2gGNArNCB8JHz1otqVRJxJHXtzIotoMjUkmwUzJU3k8lOfWrlFLEZFfFaRC
+ajcAMgaXPkt2fQkxefo9RHi/pUg50o+FbKDnwhrVMIt3u8MBxlBleSx11x15Itc=
+=xzrF
+-----END PGP SIGNATURE-----
